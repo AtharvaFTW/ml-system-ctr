@@ -1,6 +1,6 @@
-# CTR Prediction - Machine Learning End-to-End System
+# CTR Prediction — Machine Learning End-to-End System
 
-## Phase 1 - Data Pipeline (In Progress)
+## Phase 1 — Data Pipeline (In Progress)
 
 ### What it does?
 Ingests the raw Criteo CTR dataset, validates the schema, preprocesses features, handles class imbalance, splits into train/val/test, and stores processed features to PostgreSQL (via Supabase)

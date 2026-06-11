@@ -1,25 +1,57 @@
+from logging import exception
 import logging
 import pandas as pd
 import pandera as pa
 from pathlib import Path
+import os
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
-def load_raw_data(filepath: str, nrows: int = None) -> pd.DataFrame:
+def load_raw_data(filepath: str = None, nrows: int = None) -> pd.DataFrame:
     """
-    Load a raw Criteo dataset from the tab-separated file.
+    Load a raw Criteo dataset from huggingface.
 
     Args:
-        filepath: path to raw train.txt file
+        filepath: path to raw csv file.
         nrows: number of rows to load, None loads all rows
 
     Returns:
         DataFrame with colums: label, I1-I13 and C1-C26
 
     Raises:
-        FileNotFoundError: if filepath does not exist
+        FileNotFoundError: if filepath does not exist (if provided) 
     """
-    pass
+
+    if not filepath:
+        try:
+            logger.info("Using HuggingFace to load dataset.")
+            dataset = pd.read_csv("hf://datasets/reczoo/Criteo_x1/Criteo_x1.zip", nrows= nrows)
+            logger.info(f"Dataset shape: {dataset.shape}")
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            raise
+
+    else:
+        try:     
+            filepath = Path(filepath)
+            if filepath.exists():
+                logger.info(f"Using {filepath} to load dataset.")
+                dataset = pd.read_csv(filepath, nrows = nrows)
+                logger.info(f"Dataset shape: {dataset.shape}")
+            else:
+                logger.error(f"File not found: {filepath}")
+                raise FileNotFoundError(f"File not found: {filepath}")
+        except FileNotFoundError:
+            raise
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            raise
+
+    
+    logger.info("Dataset Loaded")
+    return dataset
+
 
 def validate_data(df: pd.DataFrame) -> pd.DataFrame:
     """

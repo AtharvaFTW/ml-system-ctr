@@ -1,8 +1,10 @@
+import regex
 import logging
 import pandas as pd
-import pandera as pa
+import pandera.pandas as pa
 from pathlib import Path
 import os
+import re
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -24,23 +26,23 @@ def load_raw_data(filepath: str = None, nrows: int = None) -> pd.DataFrame:
 
     if not filepath:
         try:
-            logger.info("Using HuggingFace to load dataset.")
+            logger.info("Using HuggingFace to load dataset...")
             dataset = pd.read_csv("hf://datasets/reczoo/Criteo_x1/Criteo_x1.zip", nrows= nrows)
             logger.info(f"Dataset shape: {dataset.shape}")
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.error(f"❌ Error: {e}")
             raise
 
     else:
         try:     
             filepath = Path(filepath)
             if filepath.exists():
-                logger.info(f"Using {filepath} to load dataset.")
+                logger.info(f"Using {filepath} to load dataset...")
                 dataset = pd.read_csv(filepath, nrows = nrows)
                 logger.info(f"Dataset shape: {dataset.shape}")
             else:
-                logger.error(f"File not found: {filepath}")
-                raise FileNotFoundError(f"File not found: {filepath}")
+                logger.error(f"❌ File not found: {filepath}")
+                raise FileNotFoundError(f"❌ File not found: {filepath}")
         except FileNotFoundError:
             raise
         except Exception as e:
@@ -48,7 +50,7 @@ def load_raw_data(filepath: str = None, nrows: int = None) -> pd.DataFrame:
             raise
 
     
-    logger.info("Dataset Loaded")
+    logger.info("Dataset Loaded!")
     return dataset
 
 
@@ -66,7 +68,25 @@ def validate_data(df: pd.DataFrame) -> pd.DataFrame:
     Raises:
         pandera.errors.SchemaError: if validation fails 
     """
-    pass
+    schema = pa.DataFrameSchema(
+        {
+            "label": pa.Column(int, pa.Check.isin([0,1]), nullable= False),
+            r"I\d+$": pa.Column(float, regex= True, nullable= True),
+            r"C\d+$": pa.Column(int, regex= True, nullable= True)
+            
+        },
+        strict = True
+    )
+    try:
+        logger.info("Validating the data...")
+        schema.validate(df)
+        logger.info("✅ Validation passed successfully!")
+
+    except pa.errors.SchemaError as e:
+        logger.error(f"❌ Validation failed with: {e}")
+        raise
+        
+    return df
 
 def impute_missing_data(df: pd.DataFrame) -> pd.DataFrame:
     """

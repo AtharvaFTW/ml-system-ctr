@@ -1,10 +1,8 @@
-import regex
 import logging
 import pandas as pd
 import pandera.pandas as pa
 from pathlib import Path
-import os
-import re
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -92,7 +90,7 @@ def impute_missing_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Handles the missing values explicitly.
     - Integer Features (I1 - I13): fill with the column mean.
-    - Categorical Features (C1 - C26): replace with 'missing'.
+    - Categorical Features (C1 - C26): replace with 0 (hased integers, no string replacement).
 
     Args:
         df: validated dataframe returned from validate_data()
@@ -100,7 +98,27 @@ def impute_missing_data(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         df with no missing values/ fields.
     """
-    pass
+    if not df.isnull().any().any():
+        logger.info("Found no missing values")
+        return df
+
+    else:
+        try:
+            logger.info("Imputing missing values...")
+            i_cols = [col for col in df.columns if col.startswith("I")]
+            c_cols = [col for col in df.columns if col.startswith("C")]
+            
+            for col in i_cols:
+                df[col] = df[col].fillna(df[col].mean())
+            for col in c_cols:
+                df[col] = df[col].fillna(0)
+
+        except Exception as e:
+            logger.error("❌ Imputation Failed !")
+            raise 
+
+        logger.info("✅ Imputed missing data successfully !")
+        return df
 
 def frequency_encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -171,3 +189,15 @@ def run_pipeline(raw_filepath: str, output_dir: str, n_rows: int = None) -> None
         None
     """
     pass
+
+if __name__ == "__main__":
+    import numpy as np
+    data = {
+    'Int': [25, 25, 30, 35, 25],
+    'Cat': ['New York', 'London', "None", 'Paris', 'Tokyo']
+    }
+
+    
+    df = pd.DataFrame(data)
+
+    impute_missing_data(df)

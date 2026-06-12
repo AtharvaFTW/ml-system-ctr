@@ -1,4 +1,3 @@
-from logging import exception
 import logging
 import pandas as pd
 import pandera as pa

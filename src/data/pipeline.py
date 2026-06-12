@@ -130,7 +130,20 @@ def frequency_encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         df with categorical values replaced with float(frequencies)
     """
-    pass
+    logger.info("Starting frequencing encoding!")
+
+    try:
+        c_cols = [col for col in df.columns if col.startswith("C")]
+        for col in c_cols:
+            freq = df[col].value_counts(normalize= True)
+            df[col] = df[col].map(freq)
+        logger.info("✅ Frequency encoding completed successfully")
+
+    except Exception as e:
+        logger.error(f"❌ Frequency encoding failed: {e}")
+        raise
+
+    return df
 
 def log_transform_integers(df: pd.DataFrame) -> pd.DataFrame:
     """

@@ -217,7 +217,18 @@ def save_splits(train_df:pd.DataFrame, val_df: pd.DataFrame, test_df:pd.DataFram
     Returns:
         None
     """
-    pass
+    logger.info(f"Saving the df splits as paraquets at {output_dir}...")
+
+    try:
+        Path(output_dir).mkdir(parents= True, exist_ok= True)
+        train_df.to_parquet(Path(output_dir)/ "train.parquet")
+        val_df.to_parquet(Path(output_dir)/"val.parquet")
+        test_df.to_parquet(Path(output_dir)/"test.parquet")
+        logger.info(f"✅ Save successful!")
+    except Exception as e:
+        logger.error(f"❌ Save Failed: {e}")
+        raise
+    
 
 def run_pipeline(raw_filepath: str, output_dir: str, n_rows: int = None) -> None:
     """

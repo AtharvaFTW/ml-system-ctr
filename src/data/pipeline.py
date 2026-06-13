@@ -7,8 +7,11 @@ import pandas as pd
 import pandera.pandas as pa
 import numpy as np
 
-
 load_dotenv()
+logging.basicConfig(
+    level = logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

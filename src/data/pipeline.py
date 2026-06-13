@@ -3,6 +3,7 @@ import pandas as pd
 import pandera.pandas as pa
 from pathlib import Path
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -130,7 +131,7 @@ def frequency_encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         df with categorical values replaced with float(frequencies)
     """
-    logger.info("Frequency encoding the C features!")
+    logger.info("Frequency encoding the C features...")
 
     try:
         c_cols = [col for col in df.columns if col.startswith("C")]
@@ -156,7 +157,7 @@ def log_transform_integers(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         df with log-transformed int features
     """
-    logger.info("Log transforming the I features!")
+    logger.info("Log transforming the I features...")
     try:
         i_cols = [col for col in df.columns if col.startswith("I")]
         for col in i_cols:
@@ -182,7 +183,26 @@ def split_data(df: pd.DataFrame, seed: int = 42) -> tuple[pd.DataFrame, pd.DataF
     Returns:
         tuple of (train_df, val_df, test_df)
     """
-    pass
+    logger.info("Splitting the data into train/val/test")
+    try:
+        train_df, test_df = train_test_split(df, test_size= 0.3, random_state= seed)
+        val_df, test_df = train_test_split(test_df, test_size= 0.5, random_state= seed)
+        logger.info(f"Train shape: {train_df.shape}")
+        logger.info(f"Validation shape: {val_df.shape}")
+        logger.info(f"Test shape: {test_df.shape}")
+
+        for name, split in [("Train",train_df),("Val", val_df), ("Test", test_df)]:
+            dist = split["label"].value_counts(normalize = True)
+            logger.info(f"{name} class distribution: \n{dist}")
+
+        logger.info("✅ Dataset split successfully!")
+
+    except Exception as e:
+        logger.error(f"❌ Splitting failed: {e}")
+        raise
+
+    return (train_df, val_df, test_df)
+
 
 def save_splits(train_df:pd.DataFrame, val_df: pd.DataFrame, test_df:pd.DataFrame, output_dir: str) -> None:
     """

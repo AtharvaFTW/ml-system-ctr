@@ -1,14 +1,19 @@
+from sklearn.model_selection import train_test_split
+from pathlib import Path
+from datasets import load_dataset
+from dotenv import load_dotenv
 import logging
 import pandas as pd
 import pandera.pandas as pa
-from pathlib import Path
 import numpy as np
-from sklearn.model_selection import train_test_split
+
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-def load_raw_data(filepath: str = None, nrows: int = None) -> pd.DataFrame:
+def load_raw_data(filepath: str = None, n_rows: int = None) -> pd.DataFrame:
     """
     Load a raw Criteo dataset from huggingface.
 
@@ -26,7 +31,10 @@ def load_raw_data(filepath: str = None, nrows: int = None) -> pd.DataFrame:
     if not filepath:
         try:
             logger.info("Using HuggingFace to load dataset...")
-            dataset = pd.read_csv("hf://datasets/reczoo/Criteo_x1/Criteo_x1.zip", nrows= nrows)
+            dataset = load_dataset("reczoo/Criteo_x1", split= "train")
+            df = dataset.to_pandas()
+            if n_rows:
+                df = df.head(n_rows)
             logger.info(f"Dataset shape: {dataset.shape}")
         except Exception as e:
             logger.error(f"❌ Error: {e}")
@@ -37,7 +45,7 @@ def load_raw_data(filepath: str = None, nrows: int = None) -> pd.DataFrame:
             filepath = Path(filepath)
             if filepath.exists():
                 logger.info(f"Using {filepath} to load dataset...")
-                dataset = pd.read_csv(filepath, nrows = nrows)
+                dataset = pd.read_csv(filepath, nrows = n_rows)
                 logger.info(f"Dataset shape: {dataset.shape}")
             else:
                 logger.error(f"❌ File not found: {filepath}")
@@ -50,7 +58,7 @@ def load_raw_data(filepath: str = None, nrows: int = None) -> pd.DataFrame:
 
     
     logger.info("Dataset Loaded!")
-    return dataset
+    return df
 
 
 def validate_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -79,7 +87,7 @@ def validate_data(df: pd.DataFrame) -> pd.DataFrame:
     try:
         logger.info("Validating the data...")
         schema.validate(df)
-        logger.info("✅ Validation passed successfully!")
+        logger.info("✔ Validation passed successfully!")
 
     except pa.errors.SchemaError as e:
         logger.error(f"❌ Validation failed with: {e}")
@@ -118,7 +126,7 @@ def impute_missing_data(df: pd.DataFrame) -> pd.DataFrame:
             logger.error("❌ Imputation Failed !")
             raise 
 
-        logger.info("✅ Imputed missing data successfully !")
+        logger.info("✔ Imputed missing data successfully !")
         return df
 
 def frequency_encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
@@ -138,7 +146,7 @@ def frequency_encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
         for col in c_cols:
             freq = df[col].value_counts(normalize= True)
             df[col] = df[col].map(freq)
-        logger.info("✅ Frequency encoding completed successfully!")
+        logger.info("✔ Frequency encoding completed successfully!")
 
     except Exception as e:
         logger.error(f"❌ Frequency encoding failed: {e}")
@@ -162,7 +170,7 @@ def log_transform_integers(df: pd.DataFrame) -> pd.DataFrame:
         i_cols = [col for col in df.columns if col.startswith("I")]
         for col in i_cols:
             df[col] = np.log1p(df[col])
-        logger.info("✅ Log trasformation completed successfully!")
+        logger.info("✔ Log trasformation completed successfully!")
     
     except Exception as e:
         logger.error(f"❌ Log transformation failed: {e}")
@@ -195,7 +203,7 @@ def split_data(df: pd.DataFrame, seed: int = 42) -> tuple[pd.DataFrame, pd.DataF
             dist = split["label"].value_counts(normalize = True)
             logger.info(f"{name} class distribution: \n{dist}")
 
-        logger.info("✅ Dataset split successfully!")
+        logger.info("✔ Dataset split successfully!")
 
     except Exception as e:
         logger.error(f"❌ Splitting failed: {e}")
@@ -224,35 +232,43 @@ def save_splits(train_df:pd.DataFrame, val_df: pd.DataFrame, test_df:pd.DataFram
         train_df.to_parquet(Path(output_dir)/ "train.parquet")
         val_df.to_parquet(Path(output_dir)/"val.parquet")
         test_df.to_parquet(Path(output_dir)/"test.parquet")
-        logger.info(f"✅ Save successful!")
+        logger.info(f"✔ Save successful!")
     except Exception as e:
         logger.error(f"❌ Save Failed: {e}")
         raise
     
 
-def run_pipeline(raw_filepath: str, output_dir: str, n_rows: int = None) -> None:
+def run_pipeline(raw_filepath:str= None, n_rows: int = None , output_dir: str = r"data/processed") -> None:
     """
     Orchestrates the full data pipeline end to end.
     Calls each step in order. Fails loudly if any step fails.
 
     Args:
-        raw_filepath: path to raw train.txt.
+        raw_filepath: path to raw train.csv if available else fetches from Huggingface (reczoo/Criteo_x1).
         output_dir: location to save the processed parquet files.
         n_rows: number of rows to load, None loads all
 
     Returns:
         None
     """
-    pass
+    logger.info("Firing the data pipeline ...")
+
+    try:
+
+        data = load_raw_data(filepath= raw_filepath, n_rows = n_rows)
+        data = validate_data(data)
+        data = impute_missing_data(data)
+        data = frequency_encode_categoricals(data)
+        data = log_transform_integers(data)
+        train_data, val_data, test_data = split_data(data)
+        save_splits(train_data, val_data, test_data, output_dir)
+        logger.info("✅ Datapipeline executed Successfully!")
+
+    except Exception as e:
+        logger.error(f"Data pipeline failed: {e}")
+        raise
+    
 
 if __name__ == "__main__":
-    import numpy as np
-    data = {
-    'Int': [25, 25, 30, 35, 25],
-    'Cat': ['New York', 'London', "None", 'Paris', 'Tokyo']
-    }
-
     
-    df = pd.DataFrame(data)
-
-    impute_missing_data(df)
+    run_pipeline( n_rows= 1000001,output_dir= r"data/processed")

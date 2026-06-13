@@ -2,7 +2,7 @@ import logging
 import pandas as pd
 import pandera.pandas as pa
 from pathlib import Path
-
+import numpy as np
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -130,14 +130,14 @@ def frequency_encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         df with categorical values replaced with float(frequencies)
     """
-    logger.info("Starting frequencing encoding!")
+    logger.info("Frequency encoding the C features!")
 
     try:
         c_cols = [col for col in df.columns if col.startswith("C")]
         for col in c_cols:
             freq = df[col].value_counts(normalize= True)
             df[col] = df[col].map(freq)
-        logger.info("✅ Frequency encoding completed successfully")
+        logger.info("✅ Frequency encoding completed successfully!")
 
     except Exception as e:
         logger.error(f"❌ Frequency encoding failed: {e}")
@@ -156,7 +156,18 @@ def log_transform_integers(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         df with log-transformed int features
     """
-    pass
+    logger.info("Log transforming the I features!")
+    try:
+        i_cols = [col for col in df.columns if col.startswith("I")]
+        for col in i_cols:
+            df[col] = np.log1p(df[col])
+        logger.info("✅ Log trasformation completed successfully!")
+    
+    except Exception as e:
+        logger.error(f"❌ Log transformation failed: {e}")
+        raise
+    
+    return df
 
 def split_data(df: pd.DataFrame, seed: int = 42) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """

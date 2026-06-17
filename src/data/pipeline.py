@@ -265,7 +265,7 @@ def push_to_supabase(df: pd.DataFrame, table_name: str)-> None:
     logger.info(f"Pushing the df to {table_name}...")
     try:
         df.sample(10000).to_sql(table_name, engine, if_exists="replace",index= False, method = "multi", chunksize = 1000)
-        logger.info(f"✔ Successfully pushed {len(df)} rows to {table_name}!")
+        logger.info(f"✔ Successfully pushed sample rows to {table_name}!")
 
     except Exception as e:
         logger.error(f"Push failed: {e}")

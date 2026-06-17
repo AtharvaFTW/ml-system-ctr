@@ -1,6 +1,6 @@
 # CTR Prediction — Machine Learning End-to-End System
 
-## Phase 1 — Data Pipeline (In Progress)
+## Phase 1 — Data Pipeline (Completed)
 
 ### What it does?
 Ingests the raw Criteo CTR dataset, validates the schema, preprocesses features, handles class imbalance, splits into train/val/test, and stores processed features to PostgreSQL (via Supabase)
@@ -11,7 +11,7 @@ Ingests the raw Criteo CTR dataset, validates the schema, preprocesses features,
 - Switch datasets requires only a config change — pipeline logic is dataset-agnostic
 
 ### Inputs
-- `data/raw/train.txt` - raw Criteo dataset (tab-separated, no header)
+- `data/raw/train.csv` - raw Criteo dataset
 
 ### Outputs
 - `data/processed/train.parquet` 
@@ -28,3 +28,33 @@ raw CSV -> schema validation -> missing value imputation -> feature encoding -> 
 - scale_pos_weight over SMOTE — Criteo has 26 high-cardinality categorical features, SMOTE interpolation is meaningless on hashed categoricals.
 - Mean imputation for integer features, 'missing' token for categoricals.
 - Fixed random seed (42) for reproducibility.
+
+## Phase 2 - Feast Feature Store (In Progress)
+
+### What it does?
+The feast feature store reduces and eliminates the training-serving skew. Now is training-skew? The data mismatch between what model saw while training and what it is seeing during inference.
+
+- Offline store - historical features for training. Reads from the parquet files mentioned below.
+- Online store - real-time features for inference. Reads from the Redis cache (fast, in-memory).
+
+### Inputs
+- `data/processed/train.parquet` - processed train data
+- `data/processed/val.parquet` - processed val data
+- `data/processed/test.parquet` - processed test data
+
+### Outputs
+- Feature definitions in code `src/features`
+- Feast registry file `feature_store.yaml`
+- A script that pushes features to the store.
+- A training retrieval function.
+- An online retrieval function.
+
+### Data flow
+```
+parquet_files → Feast offline store → training_features
+                        ↓
+                feast materialize (the command that syncs features from offline → online)
+                        ↓
+                Feast online store (Redis) → inference features
+```
+

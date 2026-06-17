@@ -251,7 +251,7 @@ def save_splits(train_df:pd.DataFrame, val_df: pd.DataFrame, test_df:pd.DataFram
         logger.error(f"❌ Save Failed: {e}")
         raise
 
-def push_to_supabase(df: pd.DataFrame, table_name: str)-> None:
+def push_to_supabase(df: pd.DataFrame, table_name: str, n_samples:int = None)-> None:
     """
     Loads the parquet files to the PostgreSQL (via Supabase).
 
@@ -264,8 +264,13 @@ def push_to_supabase(df: pd.DataFrame, table_name: str)-> None:
     """
     logger.info(f"Pushing the df to {table_name}...")
     try:
-        df.sample(10000).to_sql(table_name, engine, if_exists="replace",index= False, method = "multi", chunksize = 1000)
-        logger.info(f"✔ Successfully pushed sample rows to {table_name}!")
+        
+        if n_samples:
+            df = df.sample(n_samples)
+
+        df["event_timestamp"] = pd.date_range(start ="2024-01-01",periods= len(df), freq="1s")
+        df.to_sql(table_name, engine, if_exists="replace",index= False, method = "multi", chunksize = 1000)
+        logger.info(f"✔ Successfully pushed {len(df)} sample rows to {table_name}!")
 
     except Exception as e:
         logger.error(f"Push failed: {e}")
@@ -296,9 +301,9 @@ def run_pipeline(raw_filepath:str= None, n_rows: int = None , output_dir: str = 
         data = log_transform_integers(data)
         train_data, val_data, test_data = split_data(data)
         save_splits(train_data, val_data, test_data, output_dir)
-        push_to_supabase(train_data, "train_features")
-        push_to_supabase(val_data, "val_features")
-        push_to_supabase(test_data, "test_features")
+        push_to_supabase(train_data, "train_features", n_samples= 7000) # Ratio 70:15:15
+        push_to_supabase(val_data, "val_features", n_samples= 1500)
+        push_to_supabase(test_data, "test_features", n_samples= 1500)
 
         logger.info("✅ Datapipeline executed Successfully!")
 

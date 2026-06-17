@@ -1,0 +1,22 @@
+project: criteo_ctr
+
+registry:
+  registry_type: sql
+  path: ${DATABASE_URL}
+
+provider: local
+
+offline_store:
+  type: postgres
+  host: ${SUPABASE_HOST}
+  port: 5432
+  database: postgres
+  db_schema: feast
+  user: postgres
+  password: ${SUPABASE_PASSWORD}
+
+online_store:
+  type: redis
+  connection_string: "${REDIS_HOST}:${REDIS_PORT},password=${REDIS_PASSWORD}"
+  
+entity_key_serialization_version: 2

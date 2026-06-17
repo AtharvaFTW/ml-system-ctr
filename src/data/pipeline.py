@@ -2,12 +2,19 @@ from sklearn.model_selection import train_test_split
 from pathlib import Path
 from datasets import load_dataset
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
 import logging
 import pandas as pd
 import pandera.pandas as pa
 import numpy as np
+import os
+
 
 load_dotenv()
+
+DB_URL = os.environ.get("DATABASE_URL")
+engine = create_engine(DB_URL)
+
 logging.basicConfig(
     level = logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -243,6 +250,26 @@ def save_splits(train_df:pd.DataFrame, val_df: pd.DataFrame, test_df:pd.DataFram
     except Exception as e:
         logger.error(f"❌ Save Failed: {e}")
         raise
+
+def push_to_supabase(df: pd.DataFrame, table_name: str)-> None:
+    """
+    Loads the parquet files to the PostgreSQL (via Supabase).
+
+    Args:
+        df: processed dataframe
+        table_name: table to insert data
+
+    Returns:
+        None
+    """
+    logger.info(f"Pushing the df to {table_name}...")
+    try:
+        df.sample(10000).to_sql(table_name, engine, if_exists="replace",index= False, method = "multi", chunksize = 1000)
+        logger.info(f"✔ Successfully pushed {len(df)} rows to {table_name}!")
+
+    except Exception as e:
+        logger.error(f"Push failed: {e}")
+        raise
     
 
 def run_pipeline(raw_filepath:str= None, n_rows: int = None , output_dir: str = r"data/processed") -> None:
@@ -269,6 +296,10 @@ def run_pipeline(raw_filepath:str= None, n_rows: int = None , output_dir: str = 
         data = log_transform_integers(data)
         train_data, val_data, test_data = split_data(data)
         save_splits(train_data, val_data, test_data, output_dir)
+        push_to_supabase(train_data, "train_features")
+        push_to_supabase(val_data, "val_features")
+        push_to_supabase(test_data, "test_features")
+
         logger.info("✅ Datapipeline executed Successfully!")
 
     except Exception as e:

@@ -32,7 +32,7 @@ raw CSV -> schema validation -> missing value imputation -> feature encoding -> 
 ## Phase 2 - Feast Feature Store (In Progress)
 
 ### What it does?
-The feast feature store reduces and eliminates the training-serving skew. Now is training-skew? The data mismatch between what model saw while training and what it is seeing during inference.
+The feast feature store reduces and eliminates the training-serving skew. What is training-serving skew? The data mismatch between what model saw while training and what it is seeing during inference.
 
 - Offline store - historical features for training. Reads from the parquet files mentioned below.
 - Online store - real-time features for inference. Reads from the Redis cache (fast, in-memory).

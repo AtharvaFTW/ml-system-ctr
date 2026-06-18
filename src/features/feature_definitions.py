@@ -1,7 +1,11 @@
 from feast import Entity, FeatureView, Field
 from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import PostgreSQLSource
 from feast.types import Float32, Int64
+from feast.value_type import ValueType
 from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def get_entity():
     """
@@ -12,7 +16,8 @@ def get_entity():
         Entity: click_event_id entity
     """
     
-    return Entity("click_event_id")
+    return Entity(name = "click_event_id",
+                    value_type= ValueType.INT64)
 
 def get_data_source(table_name: str):
     """

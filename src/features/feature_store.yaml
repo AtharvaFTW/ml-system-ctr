@@ -8,15 +8,15 @@ provider: local
 
 offline_store:
   type: postgres
-  host: ${SUPABASE_HOST}
+  host: ${DATABASE_HOST}
   port: 5432
   database: postgres
   db_schema: feast
-  user: postgres
-  password: ${SUPABASE_PASSWORD}
+  user: ${DATABASE_USER}
+  password: ${DATABASE_PASSWORD}
 
 online_store:
   type: redis
   connection_string: "${REDIS_HOST}:${REDIS_PORT},password=${REDIS_PASSWORD}"
   
-entity_key_serialization_version: 2
+entity_key_serialization_version: 3

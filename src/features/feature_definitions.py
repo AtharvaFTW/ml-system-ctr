@@ -1,6 +1,7 @@
 from feast import Entity, FeatureView, Field
 from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import PostgreSQLSource
 from feast.types import Float32, Int64
+from datetime import timedelta
 
 def get_entity():
     """
@@ -39,7 +40,13 @@ def get_integer_feature_view(source, entity):
     Returns:
         FeatureView
     """
-    pass
+    return FeatureView(
+        name = "integer_features",
+        entities = [entity],
+        schema = [Field(name = f"I{i}",dtype = Float32) for i in range(1,14)],
+        source = source,
+        ttl = timedelta(days=1)
+    )
 
 def get_categorical_feature_view(source, entity):
     """
@@ -52,4 +59,10 @@ def get_categorical_feature_view(source, entity):
     Returns:
         FeatureView
     """
-    pass
+    return FeatureView(
+        name = "categorical_features",
+        entities = [entity],
+        schema = [Field(name = f"C{i}",dtype = Int64) for i in range(1,27)],
+        source = source,
+        ttl = timedelta(days=1)
+    )

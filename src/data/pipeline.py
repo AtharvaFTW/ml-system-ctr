@@ -10,22 +10,14 @@ import numpy as np
 import os
 
 
+from src.logger import get_logger
+
 load_dotenv()
 
 DB_URL = os.environ.get("DATABASE_URL")
 engine = create_engine(DB_URL)
 
-logging.basicConfig(
-    level = logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("huggingface_hub").setLevel(logging.WARNING)
-logging.getLogger("datasets").setLevel(logging.WARNING)
-
-logger = logging.getLogger(__name__)
-
-logger.setLevel(logging.DEBUG)
+logger = get_logger(__name__)
 
 def load_raw_data(filepath: str = None, n_rows: int = None) -> pd.DataFrame:
     """

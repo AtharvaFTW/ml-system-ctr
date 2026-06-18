@@ -1,7 +1,7 @@
 from feast import FeatureStore
 from pathlib import Path
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.features.feature_definitions import get_entity, get_data_source, get_integer_feature_view, get_categorical_feature_view
 from src.logger import get_logger
@@ -33,7 +33,7 @@ def push_features_to_store():
         store.apply([entity, integer_fv, categorical_fv])
 
         logger.info("Materializing features to Redis...")
-        store.materialize_incremental(end_date = datetime.utcnow())
+        store.materialize_incremental(end_date = datetime.now(timezone.utc))
         logger.info("✔ Features materialized successfully!")
 
     except Exception as e:
@@ -100,3 +100,6 @@ def get_serving_features(entity_rows: list, features: list = all_features) -> di
         raise
 
     return data
+
+if __name__ == "__main__":
+    push_features_to_store()

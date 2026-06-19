@@ -142,3 +142,8 @@ cython_debug/
 .idea/
 *.swp
 *.swo
+
+
+#local only
+logs
+plugins

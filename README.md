@@ -29,6 +29,7 @@ raw CSV -> schema validation -> missing value imputation -> feature encoding -> 
 - Mean imputation for integer features, 'missing' token for categoricals.
 - Fixed random seed (42) for reproducibility.
 
+
 ## Phase 2 - Feast Feature Store (In Progress)
 
 ### What it does?
@@ -58,3 +59,30 @@ parquet_files → Feast offline store → training_features
                 Feast online store (Redis) → inference features
 ```
 
+
+## Phase 3 - Airflow DAG
+
+## What it does?
+Airflow has two components, DAG and Task. Let's see each one does:
+
+- DAG — Directed Acyclic Graph. It's a sequence of steps where each step flows into next, no loops (acyclic). In Airflow, your entire training pipeline is one DAG.
+
+- Task — One single step inside a DAG. Each step in the data flow is one Task. A task is just a Python fucntion that Airflow runs.
+Key property: each **Task is independently retryable**. If `train_model` fails, Airflow reruns just `train_model`, not the whole DAG from start.
+
+### Inputs
+- Processed feature data from Feast offline store (Supabase)
+- `data/processed/train.parquet`— for validation step
+
+### Outputs
+- Evaluation metrics logged to MLFlow (AUC-ROC, log loss, precision, recall)
+- Trained XGBoost model artifact registered in MLFlow model register (only if AUC-ROC beats the current champion model).
+
+### Data flow
+```
+validate_data → retrieve_features → train_model → evaluate model → register_model
+```
+### Key decisions
+- Each task is independently retryable — failure in one task doesn't restart the whole DAG
+- DAG is idempotent — running twice with same data produces same result
+- Model only registers if AUC-ROC beats the current champion — no accidental downgrades!

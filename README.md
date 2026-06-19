@@ -62,7 +62,7 @@ parquet_files → Feast offline store → training_features
 
 ## Phase 3 - Airflow DAG
 
-## What it does?
+### What it does?
 Airflow has two components, DAG and Task. Let's see each one does:
 
 - DAG — Directed Acyclic Graph. It's a sequence of steps where each step flows into next, no loops (acyclic). In Airflow, your entire training pipeline is one DAG.

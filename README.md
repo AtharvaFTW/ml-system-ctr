@@ -1,6 +1,6 @@
 # CTR Prediction — Machine Learning End-to-End System
 
-## Phase 1 — Data Pipeline (Completed)
+## Phase 1 — Data Pipeline
 
 ### What it does?
 Ingests the raw Criteo CTR dataset, validates the schema, preprocesses features, handles class imbalance, splits into train/val/test, and stores processed features to PostgreSQL (via Supabase)
@@ -30,7 +30,7 @@ raw CSV -> schema validation -> missing value imputation -> feature encoding -> 
 - Fixed random seed (42) for reproducibility.
 
 ---
-## Phase 2 - Feast Feature Store (In Progress)
+## Phase 2 — Feast Feature Store
 
 ### What it does?
 The feast feature store reduces and eliminates the training-serving skew. What is training-serving skew? The data mismatch between what model saw while training and what it is seeing during inference.
@@ -60,7 +60,7 @@ parquet_files → Feast offline store → training_features
 ```
 
 ---
-## Phase 3 - Airflow DAG
+## Phase 3 — Airflow DAG (In Progress)
 
 ### What it does?
 Airflow has two components, DAG and Task. Let's see each one does:
@@ -86,3 +86,56 @@ validate_data → retrieve_features → train_model → evaluate model → regis
 - Each task is independently retryable — failure in one task doesn't restart the whole DAG
 - DAG is idempotent — running twice with same data produces same result
 - Model only registers if AUC-ROC beats the current champion — no accidental downgrades!
+
+---
+## Phase 4 — Model Training & Experiment Tracking
+
+### What it does?
+In this phase we cover 2 things:
+- Train our XGBoost model on CTR dataset.
+- MLFlow experiment tracking — tracks our training hyperparameters/ logs and model state_dict as model artifact.
+
+We will execute this phase via the Airflow DAG
+
+### Inputs
+- Training features retrieved from Feast offline store (Supabase)
+   - I1-I13 integer features (log transformed)
+   - C1-C26 categorical features (frequency encoded)
+   - `label` column (0/1 click labels)
+
+- `data/processed/train.parquet` — training split
+- `data/processed/val.parquet` — validation split for early stopping
+
+### Outputs
+- Trained XGBoost model artifact saved to MLFlow
+- Experiment run logged to MLFlow with:
+  - Hyperparameters (n_estimators, max_depth, scale_pos_weight, etc.)
+  - Metrics (AUC-ROC, log loss, precision, recall)
+  - Dataset hash (for reproducibility)
+  - Feast feature view version used
+- Model tagged as `challenger` in MLFlow registry
+- Promoted to `champion` if AUC-ROC beats the current champion
+
+### Data flow
+```
+Feast offline store (Supabase)
+        ↓
+retrieve_features (Airflow task)
+        ↓
+train_model (XGBoost training with scale_pos_weight)
+        ↓
+evaluate_model ( AUC-ROC , log loss, precision , recall on test set)
+        ↓
+MLFlow (log hyperparameters, metrics, model artifact)
+        ↓
+register_model (champion/ challenger comparision)
+        ↓
+MLFlow Model Registry (tagged champion or challenger)
+```
+
+### Key decisions
+- XGBoost **>** Neural Networks — XGBoost is lighter, trains on CPU and works well with binary classification.
+- scale_pos_weight **>** SMOTE — SMOTE creates dummy data to eliminate the imbalance, which adds noise to our training data on the other hand scale_pos_weight handles the imbalance by giving more importance to the minority class and doesn't modify our data.
+- MLFlow **>** W&B — MLFLow is open source and runs locally with no account or api required. W&B has free tier but limited to 5GB space. For self-hosted system MLFLow is right default. At scale, internal tools like Vizier or VertexAI replaces both.
+
+---

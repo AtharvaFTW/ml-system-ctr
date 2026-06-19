@@ -29,7 +29,7 @@ raw CSV -> schema validation -> missing value imputation -> feature encoding -> 
 - Mean imputation for integer features, 'missing' token for categoricals.
 - Fixed random seed (42) for reproducibility.
 
-
+---
 ## Phase 2 - Feast Feature Store (In Progress)
 
 ### What it does?
@@ -59,7 +59,7 @@ parquet_files → Feast offline store → training_features
                 Feast online store (Redis) → inference features
 ```
 
-
+---
 ## Phase 3 - Airflow DAG
 
 ### What it does?

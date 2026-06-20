@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timezone
 
 from src.features.feature_definitions import get_entity, get_data_source, get_integer_feature_view, get_categorical_feature_view
-from src.logger import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

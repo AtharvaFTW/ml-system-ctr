@@ -10,7 +10,7 @@ import numpy as np
 import os
 
 
-from src.logger import get_logger
+from src.utils.logger import get_logger
 
 load_dotenv()
 

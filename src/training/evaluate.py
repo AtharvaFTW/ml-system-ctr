@@ -1,3 +1,4 @@
+from codecs import ignore_errors
 from sklearn.metrics import roc_auc_score, log_loss, precision_score, recall_score
 from pathlib import Path
 import pandas as pd
@@ -21,7 +22,7 @@ def load_test_data():
         test_data = pd.read_parquet(Path(r"data/processed/test.parquet"))
         logger.info(f"Test Data shape: {test_data.shape}")
 
-        X_test = test_data.drop(columns = ["label", "event_timestamp"])
+        X_test = test_data.drop(columns = ["label", "event_timestamp"], errors = "ignore")
         y_test = test_data["label"]
 
     except Exception as e:
@@ -84,7 +85,7 @@ def run_evalutaion(model, run_id) -> dict:
         X_test, y_test = load_test_data()
         metrics = compute_metrics(model, X_test, y_test)
 
-        with mlflow.start_run(run_id = run_id):
+        with mlflow.start_run(run_id = run_id, nested= True):
             mlflow.log_metric("test_auc", metrics["auc_score"])
             mlflow.log_metric("test_loss", metrics["log_loss"])
             mlflow.log_metric("test_precision", metrics["precision_score"])

@@ -68,7 +68,7 @@ def compute_metrics(model: xgb.XGBClassifier ,X_test: pd.DataFrame, y_test: pd.S
 
     return metrics
 
-def run_evalutaion(model, run_id) -> dict:
+def run_evaluation(model, run_id) -> dict:
     """
     Orchestrates full evaluation run with MLFlow logging.
 

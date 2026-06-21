@@ -37,11 +37,11 @@ def load_raw_data(filepath: str = None, n_rows: int = None) -> pd.DataFrame:
     if not filepath:
         try:
             logger.info("Using HuggingFace to load dataset...")
-            dataset = load_dataset("reczoo/Criteo_x1", split= "train")
-            df = dataset.to_pandas()
+            dataset = load_dataset("reczoo/Criteo_x1", split= "train", streaming = True)
             if n_rows:
-                df = df.head(n_rows)
-            logger.info(f"Dataset shape: {dataset.shape}")
+                dataset = dataset.take(n_rows)
+            df = pd.DataFrame(dataset)
+            logger.info(f"Dataset shape: {df.shape}")
         except Exception as e:
             logger.error(f"❌ Error: {e}")
             raise

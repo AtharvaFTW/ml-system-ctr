@@ -9,20 +9,43 @@ default_args = {
     "retry_delay" : timedelta(minutes= 5) 
 }
 
-def validate_data():
-    pass
+def validate_data(**context):
+    from src.data.pipeline import run_pipeline
 
-def retrieve_features():
-    pass
+    run_pipeline()
+    
 
-def train_model():
+def retrieve_features(**context):
     pass
+    
 
-def evaluate_model():
-    pass
+def train_model(**context):
+    from src.training.train import run_training
 
-def register_model():
-    pass
+    model, run_id = run_training()
+
+    context['ti'].xcom_push(key = 'run_id', value = run_id)
+
+
+def evaluate_model(**context):
+    import mlflow
+
+    from src.training.evaluate import run_evaluation
+
+    run_id = context['ti'].xcom_pull(key = "run_id", task_ids = "train_model")
+    model = mlflow.xgboost.load_model(f"runs:/{run_id}/model")
+
+    test_metrics = run_evaluation(model, run_id)
+
+    context['ti'].xcom_push(key = "test_metrics", value = test_metrics)
+
+
+def register_model_to_mlflow(**context):
+    from src.training.register import register_model
+
+    run_id = context['ti'].xcom_pull(key = "run_id", task_ids = "train_model")
+    test_metrics = context['ti'].xcom_pull(key = "test_metrics", task_ids = "evaluate_model")
+    register_model(run_id, test_metrics)
 
 
 with DAG(
@@ -56,8 +79,8 @@ with DAG(
     )
 
     t5 = PythonOperator(
-        task_id = "register_model",
-        python_callable = register_model
+        task_id = "register_model_to_mlflow",
+        python_callable = register_model_to_mlflow
     )
 
     t1 >> t2 >> t3 >> t4 >> t5

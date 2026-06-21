@@ -9,8 +9,6 @@ import numpy as np
 import mlflow
 
 from src.utils.logger import get_logger
-from src.training.evaluate import run_evalutaion
-from src.training.register import register_model, update_champion
 
 logger = get_logger(__name__)
 
@@ -154,11 +152,6 @@ def run_training():
 
             mlflow.log_metric("best_iteration", model.best_iteration)
             mlflow.log_metric("val_auc_best", eval_results["validation_1"]["auc"][model.best_iteration])
-
-            test_metrics = run_evalutaion(model, run_id)
-
-            version = register_model(run_id, test_metrics)
-            update_champion("ctr_model", version, test_metrics)
             logger.info("✅ Trainig pipleline completed successfully !")
 
     except Exception as e:

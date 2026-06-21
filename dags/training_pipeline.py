@@ -12,7 +12,7 @@ default_args = {
 def validate_data(**context):
     from src.data.pipeline import run_pipeline
 
-    run_pipeline()
+    run_pipeline(n_rows= 100000)
     
 
 def retrieve_features(**context):

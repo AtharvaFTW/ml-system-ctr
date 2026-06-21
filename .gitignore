@@ -148,3 +148,5 @@ cython_debug/
 logs
 plugins
 mlruns
+mlflow.db
+docker_sync.ps1

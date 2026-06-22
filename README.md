@@ -139,3 +139,38 @@ MLFlow Model Registry (tagged champion or challenger)
 - MLFlow **>** W&B — MLFLow is open source and runs locally with no account or api required. W&B has free tier but limited to 5GB space. For self-hosted system MLFLow is right default. At scale, internal tools like Vizier or VertexAI replaces both.
 
 ---
+## Phase 5 — FastAPI Serving Endpoints
+
+### What it is?
+
+FastAPI is a backend api endpoint service that allows to have asynchronous communication with our system. Each of our system module will have an endpoint.
+
+### Inputs
+1. `/health` — Service health check
+2. `/predict` — Takes the features and returns with click probability
+3. `/model/info` — Returns the information about the current champion model
+4. `/train` — Executes the training pipeline DAG which includes model training, model evaluation, model registration (champion / challenger logic).
+
+### Outputs
+1. `/health` — `{"status": "ok", "model": "loaded"}` 
+2. `/predict` — `{"click_probability": 0.73, "prediction":1}`
+3. `/model/info` — `{"model_name": "ctr_model", "version": "1", "auc": 0.776, "stage": "champion"}`
+4. `/train` — `{"status": "triggered", "dag_run_id": "manual__2026-06-21..."}`
+
+### Data flow
+```
+Incoming request (ad features)
+        ↓
+Pydantic validation (type checking, schema validation)
+        ↓
+Feast online store (Redis) — featch precomputed features
+        ↓
+MLFlow registery — load champion model
+        ↓
+XGBoost model inference
+        ↓
+JSON response (click probability)
+
+```
+### Key decisions
+FastAPI > Flask — Fastapi is asynchronous, data validation using type hints, very pythonic.

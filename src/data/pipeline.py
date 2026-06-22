@@ -51,8 +51,8 @@ def load_raw_data(filepath: str = None, n_rows: int = None) -> pd.DataFrame:
             filepath = Path(filepath)
             if filepath.exists():
                 logger.info(f"Using {filepath} to load dataset...")
-                dataset = pd.read_csv(filepath, nrows = n_rows)
-                logger.info(f"Dataset shape: {dataset.shape}")
+                df = pd.read_csv(filepath, nrows = n_rows)
+                logger.info(f"Dataset shape: {df.shape}")
             else:
                 logger.error(f"❌ File not found: {filepath}")
                 raise FileNotFoundError(f"❌ File not found: {filepath}")

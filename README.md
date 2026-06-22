@@ -170,7 +170,6 @@ MLFlow registery — load champion model
 XGBoost model inference
         ↓
 JSON response (click probability)
-
 ```
 ### Key decisions
 FastAPI > Flask — Fastapi is asynchronous, data validation using type hints, very pythonic.

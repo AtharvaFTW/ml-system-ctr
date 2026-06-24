@@ -152,7 +152,7 @@ FastAPI is a backend api endpoint service that allows to have asynchronous commu
 4. `/train` — Executes the training pipeline DAG which includes model training, model evaluation, model registration (champion / challenger logic).
 
 ### Outputs
-1. `/health` — `{"status": "ok", "model": "loaded"}` 
+1. `/health` — `{"status": "ok", "model": "available"}` 
 2. `/predict` — `{"click_probability": 0.73, "prediction":1}`
 3. `/model/info` — `{"model_name": "ctr_model", "version": "1", "auc": 0.776, "stage": "champion"}`
 4. `/train` — `{"status": "triggered", "dag_run_id": "manual__2026-06-21..."}`

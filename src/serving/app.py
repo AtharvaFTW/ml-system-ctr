@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import requests
 import os
-import json
 
 from src.serving.schemas import ModelInfoResponse, PredictRequest, PredictResponse
 from src.features.feature_pipeline import get_serving_features

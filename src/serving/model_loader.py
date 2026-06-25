@@ -33,7 +33,7 @@ def load():
 
         _model_info = {
             "model_name" : model_name,
-            "version" : version.version,
+            "version" : str(version.version),
             "tags" : version.tags["stage"],
             "test_auc": run.data.metrics["test_auc"]
         }

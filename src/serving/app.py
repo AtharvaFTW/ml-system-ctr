@@ -55,8 +55,7 @@ def predict(request: PredictRequest):
         feature_cols = [f"I{i}" for i in range(1,14)] + [f"C{i}" for i in range(1,27)]
         df = df[feature_cols]
         logger.info("Predicting...")
-        proba_df = model.predict(df)
-        logger.info(f"proba_df type: {type(proba_df)}, value: {proba_df}, shape: {getattr(proba_df, 'shape', 'no shape')}")
+        proba_df = model.predict_proba(df)
         click_proba = float(proba_df)
 
         prediction = 1 if click_proba > 0.5 else 0

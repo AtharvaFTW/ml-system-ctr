@@ -261,7 +261,7 @@ def push_to_supabase(df: pd.DataFrame, table_name: str, n_samples:int = None)-> 
             df = df.sample(n_samples)
 
         df["click_event_id"] = range(len(df))
-        df["event_timestamp"] = pd.date_range(start ="2024-01-01",periods= len(df), freq="1s")
+        df["event_timestamp"] = pd.date_range(start =pd.Timestamp.utcnow(), periods= len(df), freq="1s")
         df.to_sql(table_name, engine, if_exists="replace",index= False, method = "multi", chunksize = 1000)
         logger.info(f"✔ Successfully pushed {len(df)} sample rows to {table_name}!")
 

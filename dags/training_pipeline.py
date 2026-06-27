@@ -16,7 +16,8 @@ def validate_data(**context):
     
 
 def retrieve_features(**context):
-    pass
+    from src.features.feature_pipeline import push_features_to_store
+    push_features_to_store()
     
 
 def train_model(**context):

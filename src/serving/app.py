@@ -56,8 +56,7 @@ def predict(request: PredictRequest):
         df = df[feature_cols]
         logger.info("Predicting...")
         proba_df = model.predict_proba(df)
-        logger.info(f"proba_df type: {type(proba_df)}, value: {proba_df}, shape: {getattr(proba_df, 'shape', 'no shape')}")
-        click_proba = float(proba_df)
+        click_proba = float(proba_df[0][1])
 
         prediction = 1 if click_proba > 0.5 else 0
         logger.info(f"✅ Prediction : {prediction}")
@@ -66,7 +65,7 @@ def predict(request: PredictRequest):
         logger.error(f"❌ Failed to predict : {e}")
         raise
 
-    return PredictResponse(click_probability= float(click_proba), prediction = prediction)
+    return PredictResponse(click_probability= click_proba, prediction = prediction)
 
 
 @app.get("/model/info", response_model = ModelInfoResponse)

@@ -37,7 +37,7 @@ def health():
 
 @app.post("/predict", response_model= PredictResponse)
 def predict(request: PredictRequest):
-    logger.info("Recieved a prediction request.")
+    logger.info("Received a prediction request.")
 
     try:
         logger.info("Fetching the model from memory...")
@@ -52,7 +52,8 @@ def predict(request: PredictRequest):
         entity_rows = [{"click_event_id" : request.click_event_id}]
         df = get_serving_features(entity_rows)
         df = df.drop(columns = ["click_event_id"])
-
+        feature_cols = [f"I{i}" for i in range(1,14)] + [f"C{i}" for i in range(1,27)]
+        df = df[feature_cols]
         logger.info("Predicting...")
         proba_df = model.predict(df)
         click_proba = proba_df[1].iloc[0]

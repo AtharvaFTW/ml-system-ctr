@@ -1,4 +1,4 @@
-from mlflow import pyfunc
+import mlflow.xgboost
 from mlflow.client import MlflowClient
 
 from src.utils.mlflow_helpers import _get_champion_version
@@ -25,7 +25,7 @@ def load():
             raise ValueError("Couldn't find the model")
 
         model_uri = f"models:/{model_name}/{champ}"
-        _model = pyfunc.load_model(model_uri)
+        _model = mlflow.xgboost.load_model(model_uri)
 
         version = client.get_model_version(name = model_name, version = champ)
 

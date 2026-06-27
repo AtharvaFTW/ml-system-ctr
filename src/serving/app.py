@@ -82,7 +82,7 @@ def train():
     logger.info("Recieved a model training request.")
     BASE_URL = os.getenv("AIRFLOW_BASE_URL")
 
-    url = f"{BASE_URL}/api/v1/dags/training_pipeline/dagRuns"
+    url = f"{BASE_URL}/api/v2/dags/training_pipeline/dagRuns"
 
     try:
         response = requests.post(

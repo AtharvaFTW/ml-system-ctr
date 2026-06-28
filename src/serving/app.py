@@ -2,6 +2,7 @@ from psycopg.generators import BAD
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 import requests
 import os
 
@@ -97,7 +98,7 @@ def train():
         response = requests.post(
             url,
             headers = {"Authorization" : f"Bearer {token}"},
-            json = {"conf": {}}
+            json = {"conf": {}, "logical_date": datetime.now(timezone.utc).isoformat()}
         )
 
         response.raise_for_status()

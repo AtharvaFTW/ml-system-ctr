@@ -1,3 +1,4 @@
+from psycopg.generators import BAD
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -82,12 +83,20 @@ def train():
     logger.info("Recieved a model training request.")
     BASE_URL = os.getenv("AIRFLOW_BASE_URL")
 
-    url = f"{BASE_URL}/api/v2/dags/training_pipeline/dagRuns"
+   
 
     try:
+        token_response = requests.post(
+            f"{BASE_URL}/auth/token",
+            json = {"username": os.getenv("AIRFLOW_USERNAME"), "password": os.getenv("AIRFLOW_PASSWORD")}
+        )
+        token_response.raise_for_status()
+        token = token_response.json()["access_token"]
+
+        url = f"{BASE_URL}/api/v2/dags/training_pipeline/dagRuns"
         response = requests.post(
             url,
-            auth = (os.getenv("AIRFLOW_USERNAME"), os.getenv("AIRFLOW_PASSWORD")),
+            headers = {"Authorization" : f"Bearer {token}"},
             json = {"conf": {}}
         )
 
@@ -99,4 +108,4 @@ def train():
         raise
     
     logger.info(f"training_pipeline DAG initiated with id : {data["dag_run_id"]}")
-    return {"dag_run_id" : data["dag_run_id"]}
+    return {"status": "triggered" , "dag_run_id" : data["dag_run_id"]}

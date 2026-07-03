@@ -1,11 +1,16 @@
-from psycopg.generators import BAD
+from src.serving.metrics import PREDICTION_COUNTER
+from src.serving.metrics import MODEL_INFERENCE_LATENCY
+from src.serving.metrics import FEATURE_RETRIEVAL_LATENCY
+from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 import requests
 import os
+import time
 
+from src.serving.metrics import MODEL_INFERENCE_LATENCY, FEATURE_RETRIEVAL_LATENCY, PREDICTION_COUNTER, PREDICTION_SCORE
 from src.serving.schemas import ModelInfoResponse, PredictRequest, PredictResponse
 from src.features.feature_pipeline import get_serving_features
 from src.serving import model_loader
@@ -28,6 +33,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan = lifespan)
 
+Instrumentator().instrument(app).expose(app)
 
 @app.get("/health")
 def health():
@@ -52,16 +58,26 @@ def predict(request: PredictRequest):
         
         logger.info("✔ Model loaded successfully!")
         entity_rows = [{"click_event_id" : request.click_event_id}]
+
+        start = time.time()
         df = get_serving_features(entity_rows)
+        FEATURE_RETRIEVAL_LATENCY.observe(time.time() - start)
+
         df = df.drop(columns = ["click_event_id"])
         feature_cols = [f"I{i}" for i in range(1,14)] + [f"C{i}" for i in range(1,27)]
         df = df[feature_cols]
         logger.info("Predicting...")
+
+        start = time.time()
         proba_df = model.predict_proba(df)
         click_proba = float(proba_df[0][1])
+        MODEL_INFERENCE_LATENCY.observe(time.time() - start)
 
         prediction = 1 if click_proba > 0.5 else 0
         logger.info(f"✅ Prediction : {prediction}")
+
+        PREDICTION_COUNTER.labels(predictions = str(prediction)).inc()
+        PREDICTION_SCORE.observe(click_proba)
 
     except Exception as e:
         logger.error(f"❌ Failed to predict : {e}")

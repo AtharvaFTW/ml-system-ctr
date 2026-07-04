@@ -1,6 +1,3 @@
-from src.serving.metrics import PREDICTION_COUNTER
-from src.serving.metrics import MODEL_INFERENCE_LATENCY
-from src.serving.metrics import FEATURE_RETRIEVAL_LATENCY
 from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
@@ -99,8 +96,6 @@ def model_info():
 def train():
     logger.info("Recieved a model training request.")
     BASE_URL = os.getenv("AIRFLOW_BASE_URL")
-
-   
 
     try:
         token_response = requests.post(

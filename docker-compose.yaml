@@ -351,7 +351,15 @@ services:
       - "9090:9090"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+  
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
 
 volumes:
   postgres-db-volume:
   prometheus-data:
+  grafana-data:

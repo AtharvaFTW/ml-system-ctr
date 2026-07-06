@@ -1,4 +1,6 @@
 from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from starlette.responses import Response
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -30,7 +32,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan = lifespan)
 
-Instrumentator().instrument(app).expose(app)
+Instrumentator().instrument(app)
 
 @app.get("/health")
 def health():
@@ -38,6 +40,11 @@ def health():
         return {"status" : "degraded" , "model" : "unavailable"}
     
     return{"status" : "ok" , "model" : "available"}
+
+@app.get("/metrics")
+def metrics():
+    """Explicitly expose Prometheus metrics."""
+    return Response(content = generate_latest(), media_type= CONTENT_TYPE_LATEST)
 
 
 @app.post("/predict", response_model= PredictResponse)

@@ -57,6 +57,9 @@ def compute_scale_pos_weight(y_train) -> float:
         num_neg = (y_train == 0).sum()
         num_pos = (y_train == 1).sum()
 
+        if num_pos == 0:
+            raise ValueError("No positive examples in training data - cannot compute scale_pose_weight")
+
         scale_weight = num_neg / num_pos
 
         logger.info(f"Calculated scale_pos_weight: {scale_weight}")

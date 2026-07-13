@@ -1,8 +1,14 @@
 import pytest
 import pandas as pd
+import pandera.pandas as pa
 
 from tests.data.test_dummy_data import dummy_data, dummy_data_missing
-from src.data.pipeline import split_data, frequency_encode_categoricals, impute_missing_data, log_transform_integers
+from src.data.pipeline import (split_data,
+                                frequency_encode_categoricals,
+                                impute_missing_data,
+                                log_transform_integers,
+                                load_raw_data,
+                                validate_data)
 
 def test_split_data_without_rounding():
     df = pd.DataFrame(dummy_data[:10])
@@ -82,6 +88,23 @@ def test_impute_data_values():
     assert res["I1"].iloc[1] == 4.3
     assert res["I1"].iloc[5] == 4.3
 
+def test_validate_data_pass():
+    df = pd.DataFrame(dummy_data)
+    df = df.drop(columns = ["click_event_id","event_timestamp"])
+
+    for col in df.columns:
+        if col.startswith("C"):
+            df[col] = 12345
+    res = validate_data(df)
+
+    assert res is not None
+
+def test_validate_data_fail():
+    df = pd.DataFrame([1,2,3,4])
+
+    with pytest.raises(pa.errors.SchemaErrors):
+        validate_data(df)
+
 
 # def test_run_pipeline():
 #     pass
@@ -91,6 +114,3 @@ def test_impute_data_values():
 
 # def test_features_to_store():
 #     pass
-
-# if __name__ == "__main__":
-#     test_frequency_encode_categoricals()

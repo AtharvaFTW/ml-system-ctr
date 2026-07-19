@@ -173,3 +173,57 @@ JSON response (click probability)
 ```
 ### Key decisions
 FastAPI > Flask — Fastapi is asynchronous, data validation using type hints, very pythonic.
+
+
+---
+## Phase 6 — Prometheus + Grafana Monitoring
+
+### What it does?
+Adds observability to the FastAPI serving layer. Every `/predict` request now emits metrics — prediction counts, prediction score distribution, feature retrieval latency, and model inference latency — alongside FastAPI's own request-level metrics (latency, status codes) captured automatically. Prometheus polls these on a timer; Grafana reads from Prometheus to visualize them.
+
+### Inputs
+- `/metrics` endpoint on the FastAPI app (custom route, manually exposing `generate_latest()` against the default Prometheus registry)
+- `configs/prometheus.yml` — scrape configuration
+
+### Outputs
+- Prometheus UI (port 9090) — raw metric queries, target health
+- Grafana UI (port 3000) — dashboards built on top of Prometheus as a data source
+
+### Data flow
+```
+FastAPI app (uvicorn, runs on host — not containerized)
+↓ /metrics endpoint
+Prometheus (Docker container, scrapes every 15s via host.docker.internal)
+↓
+Grafana (Docker container, queries Prometheus as a data source)
+```
+
+### Key decisions
+- FastAPI serving stays on the host (uvicorn), not containerized — Prometheus reaches it via `host.docker.internal` with `extra_hosts: host-gateway`, since Docker's `localhost` refers to the container itself, not the host.
+- Manual `/metrics` route instead of `prometheus-fastapi-instrumentator`'s built-in `.expose()` — the library's default route returned an empty body in production despite a correctly populated metrics registry (verified via direct import + registry inspection); replacing it with a plain `generate_latest()` route resolved it.
+- Named Docker volumes for both Prometheus and Grafana — metric history and dashboard config persist across container restarts.
+
+---
+## Phase 7 — Testing
+
+### What it does?
+Unit tests covering the core transformation, training, and serving logic — data pipeline (encoding, imputation, splitting, schema validation), training (class-weight calculation, metric computation, champion selection), and serving (feature preparation, failure handling). External dependencies (Feast, MLflow, Supabase) are mocked so tests run without live infrastructure.
+
+### Scope
+- **Covered:** `src/data/pipeline.py` (encoding, imputation, splitting, validation), `src/features/feature_pipeline.py` (`get_serving_features`), `src/training/train.py` (`compute_scale_pos_weight`), `src/training/register.py` (`get_champion_auc`), `src/utils/mlflow_helpers.py` (`_get_champion_version`), `src/utils/predict_helpers.py` (feature reordering), `src/serving/app.py` (model-not-loaded failure path)
+- **Deliberately out of scope:** end-to-end integration tests (full DAG trigger → MLflow → FastAPI → predict) and orchestration functions (`run_pipeline`, `run_training`, `run_evaluation`, `push_to_supabase`, `push_features_to_store`) — these call already-unit-tested functions in sequence and are better proven by a real run than a heavily-mocked test. Left as a known gap rather than attempted and rushed.
+
+### Key decisions
+- `pytest` + `pytest-mock`, tests mirror `src/` structure 1:1
+- Mock external calls at the exact point they're used (`mocker.patch("module.path.object")`), not the class definition
+- Several tests intentionally probe edge cases beyond the happy path — e.g. zero-positive-class training data, no-champion-registered state — which surfaced a real bug: `compute_scale_pos_weight` silently returned `inf` on all-negative labels instead of raising, since numpy division doesn't error on zero. Fixed to raise `ValueError` explicitly.
+
+---
+## Phase 8 — Shadow Deployment / A-B Testing
+
+Not implemented. Originally scoped as a stretch phase (running a challenger model alongside the champion to compare real-world performance). Descoped to prioritize finishing Phase 6/7 cleanly within available time, rather than adding a rushed, thin version. The monitoring and testing foundations built in Phases 6-7 are what this phase would build on if resumed.
+
+---
+## Current Status
+
+Phases 1-6 complete and verified end-to-end. Phase 7 unit tests complete (integration tests deliberately deferred — see above). Phase 8 not started.

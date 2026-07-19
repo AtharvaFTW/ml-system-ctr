@@ -8,8 +8,6 @@ from src.training.register import get_champion_auc
 from src.utils.mlflow_helpers import _get_champion_version
 
                             
-
-
 def test_compute_scale_post_weight():
     mock_data = pd.Series([1,0,0,0,1,0,1,0,1,0,0,0,0,0,0,0,1,0,1])
     res = compute_scale_pos_weight(mock_data)
@@ -86,10 +84,3 @@ def test_get_champion_version_no_champion(mocker):
     res = _get_champion_version()
     assert res is None
 
-# Column drop logic/reorder logic inside /predict in app.py
-
-# def test_run_training():
-#     pass
-
-# def test_run_evaluation():
-#     pass

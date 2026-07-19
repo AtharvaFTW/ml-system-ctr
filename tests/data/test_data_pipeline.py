@@ -104,13 +104,3 @@ def test_validate_data_fail():
 
     with pytest.raises(pa.errors.SchemaErrors):
         validate_data(df)
-
-
-# def test_run_pipeline():
-#     pass
-
-# def test_push_to_supabase():
-#     pass
-
-# def test_features_to_store():
-#     pass

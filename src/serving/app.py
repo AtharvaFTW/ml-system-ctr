@@ -14,6 +14,7 @@ from src.serving.schemas import ModelInfoResponse, PredictRequest, PredictRespon
 from src.features.feature_pipeline import get_serving_features
 from src.serving import model_loader
 from src.utils.logger import get_logger
+from src.utils.predict_helpers import prepare_features_for_prediction
 
 logger = get_logger(__name__)
 load_dotenv()
@@ -67,9 +68,7 @@ def predict(request: PredictRequest):
         df = get_serving_features(entity_rows)
         FEATURE_RETRIEVAL_LATENCY.observe(time.time() - start)
 
-        df = df.drop(columns = ["click_event_id"])
-        feature_cols = [f"I{i}" for i in range(1,14)] + [f"C{i}" for i in range(1,27)]
-        df = df[feature_cols]
+        df = prepare_features_for_prediction(df)
         logger.info("Predicting...")
 
         start = time.time()
